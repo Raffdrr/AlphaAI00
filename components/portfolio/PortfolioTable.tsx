@@ -8,9 +8,10 @@ interface PortfolioTableProps {
 }
 
 const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
-    const { activeTab, portfolio, watchlist, marketData } = useStore();
+    const { activeTab, portfolios, activePortfolioId, watchlist, marketData } = useStore();
 
-    const items = activeTab === TabType.PORTFOLIO ? portfolio : watchlist;
+    const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
+    const items = activeTab === TabType.PORTFOLIO ? (activePortfolio?.items || []) : watchlist;
 
     if (items.length === 0) {
         return (
@@ -63,9 +64,9 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
 
                     let pnl = 0;
                     let pnlPercent = 0;
-                    if (activeTab === TabType.PORTFOLIO && 'quantity' in item && 'avgCost' in item) {
-                        const currentValue = (data?.price || 0) * (item.quantity || 0);
-                        const costBasis = (item.avgCost || 0) * (item.quantity || 0);
+                    if (activeTab === TabType.PORTFOLIO && 'quantity' in item && 'avgCost' in item && item.quantity && item.avgCost) {
+                        const currentValue = (data?.price || 0) * item.quantity;
+                        const costBasis = item.avgCost * item.quantity;
                         pnl = currentValue - costBasis;
                         pnlPercent = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
                     }
@@ -110,7 +111,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
                             </div>
 
                             {/* Portfolio Specific */}
-                            {activeTab === TabType.PORTFOLIO && 'quantity' in item && (
+                            {activeTab === TabType.PORTFOLIO && 'quantity' in item && 'avgCost' in item && (
                                 <>
                                     <div className="text-left md:text-right">
                                         <p className="text-sm text-gray-400 md:hidden mb-1">Holdings</p>
