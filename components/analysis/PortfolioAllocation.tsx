@@ -2,109 +2,75 @@ import React, { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { PieChart } from 'lucide-react';
 
-const COLORS = ['#8ab4f8', '#81c995', '#f28b82', '#fdd663', '#c58af9', '#78d9ec', '#ff8bcb'];
-
 const PortfolioAllocation: React.FC = () => {
-    const { portfolio, marketData } = useStore();
+    const { portfolios, activePortfolioId, marketData } = useStore();
 
-    const data = useMemo(() => {
-        let totalValue = 0;
-        const items = portfolio.map(item => {
-            const price = marketData[item.ticker]?.price || 0;
-            const value = price * (item.quantity || 0);
-            totalValue += value;
-            return { ticker: item.ticker, value };
-        }).filter(i => i.value > 0);
+    const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
+    const portfolioItems = activePortfolio?.items || [];
 
-        return items.sort((a, b) => b.value - a.value).map((item, index) => ({
-            ...item,
-            percent: (item.value / totalValue) * 100,
-            color: COLORS[index % COLORS.length]
-        }));
-    }, [portfolio, marketData]);
+    const allocation = useMemo(() => {
+        const sectorMap: Record<string, number> = {};
+        let total = 0;
 
-    if (data.length === 0) {
-        return (
-            <div className="bg-[#1e1f20] border border-[#3c4043] rounded-xl p-6 flex flex-col items-center justify-center h-full min-h-[300px] text-[#bdc1c6]">
-                <PieChart size={48} className="opacity-20 mb-4" />
-                <p>Nessun dato per l'analisi</p>
-            </div>
-        );
-    }
+        portfolioItems.forEach((item) => {
+            const data = marketData[item.ticker];
+            if (data && item.quantity) {
+                const value = data.price * item.quantity;
+                const sector = 'Technology'; // TODO: Get real sector from API
+                sectorMap[sector] = (sectorMap[sector] || 0) + value;
+                total += value;
+            }
+        });
 
-    // SVG Pie Chart Logic
-    let cumulativePercent = 0;
-    const getCoordinatesForPercent = (percent: number) => {
-        const x = Math.cos(2 * Math.PI * percent);
-        const y = Math.sin(2 * Math.PI * percent);
-        return [x, y];
-    };
+        return Object.entries(sectorMap).map(([sector, value]) => ({
+            sector,
+            value,
+            percentage: total > 0 ? (value / total) * 100 : 0,
+        })).sort((a, b) => b.value - a.value);
+    }, [portfolioItems, marketData]);
+
+    const colors = [
+        'from-accent-500 to-accent-600',
+        'from-blue-500 to-blue-600',
+        'from-green-500 to-green-600',
+        'from-purple-500 to-purple-600',
+        'from-pink-500 to-pink-600',
+    ];
 
     return (
-        <div className="bg-[#1e1f20] border border-[#3c4043] rounded-xl overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-[#3c4043] bg-[#202124]">
-                <h3 className="font-bold text-white text-sm uppercase tracking-wider">Allocazione Portfolio</h3>
+        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-accent-500/10 rounded-lg">
+                    <PieChart className="text-accent-500" size={20} />
+                </div>
+                <h3 className="text-lg font-bold text-white">Allocazione Portfolio</h3>
             </div>
 
-            <div className="p-6 flex flex-col md:flex-row items-center gap-8">
-                {/* Pie Chart */}
-                <div className="relative w-48 h-48 shrink-0">
-                    <svg viewBox="-1 -1 2 2" className="transform -rotate-90 w-full h-full">
-                        {data.map((slice, i) => {
-                            const start = cumulativePercent;
-                            cumulativePercent += slice.percent / 100;
-                            const end = cumulativePercent;
-
-                            // If single item, draw full circle
-                            if (data.length === 1) {
-                                return <circle key={slice.ticker} cx="0" cy="0" r="1" fill={slice.color} />;
-                            }
-
-                            const [startX, startY] = getCoordinatesForPercent(start);
-                            const [endX, endY] = getCoordinatesForPercent(end);
-                            const largeArcFlag = slice.percent > 50 ? 1 : 0;
-
-                            const pathData = [
-                                `M 0 0`,
-                                `L ${startX} ${startY}`,
-                                `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
-                                `Z`
-                            ].join(' ');
-
-                            return (
-                                <path
-                                    key={slice.ticker}
-                                    d={pathData}
-                                    fill={slice.color}
-                                    className="hover:opacity-80 transition-opacity cursor-pointer"
-                                >
-                                    <title>{slice.ticker}: {slice.percent.toFixed(1)}%</title>
-                                </path>
-                            );
-                        })}
-                    </svg>
-                    {/* Inner Circle for Donut Effect */}
-                    <div className="absolute inset-0 m-auto w-32 h-32 bg-[#1e1f20] rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-[#bdc1c6]">{portfolio.length} Asset</span>
-                    </div>
+            {allocation.length === 0 ? (
+                <div className="text-center py-12">
+                    <p className="text-gray-500">Nessun dato disponibile</p>
                 </div>
-
-                {/* Legend */}
-                <div className="flex-1 w-full space-y-3 overflow-y-auto max-h-[200px] pr-2">
-                    {data.map((item) => (
-                        <div key={item.ticker} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                                <span className="font-medium text-white">{item.ticker}</span>
+            ) : (
+                <div className="space-y-4">
+                    {allocation.map((item, index) => (
+                        <div key={item.sector} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-white">{item.sector}</span>
+                                <span className="text-sm font-bold text-accent-500">{item.percentage.toFixed(1)}%</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-[#bdc1c6]">${item.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                                <span className="font-bold text-white w-12 text-right">{item.percent.toFixed(1)}%</span>
+                            <div className="w-full h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full bg-gradient-to-r ${colors[index % colors.length]} rounded-full transition-all duration-500`}
+                                    style={{ width: `${item.percentage}%` }}
+                                />
                             </div>
+                            <p className="text-xs text-gray-500">
+                                ${item.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
                         </div>
                     ))}
                 </div>
-            </div>
+            )}
         </div>
     );
 };
