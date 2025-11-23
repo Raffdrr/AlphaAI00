@@ -27,7 +27,6 @@ interface AppState {
     removeFromWatchlist: (id: string) => void;
     setApiKeys: (keys: { fmp: string; gemini: string }) => void;
     updateMarketData: (ticker: string, data: MarketData) => void;
-    updateMarketData: (ticker: string, data: MarketData) => void;
     setActiveTab: (tab: TabType) => void;
     toggleFocusMode: () => void;
 
@@ -41,7 +40,6 @@ export const useStore = create<AppState>()(
             portfolio: [],
             watchlist: [],
             alerts: [],
-            marketData: {},
             marketData: {},
             activeTab: TabType.PORTFOLIO, // Default
             isFocusMode: false,
