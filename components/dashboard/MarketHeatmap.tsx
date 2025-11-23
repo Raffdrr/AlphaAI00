@@ -1,21 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { getSectorPerformance } from '../../services/marketService';
-import { RefreshCw } from 'lucide-react';
-
-interface SectorData {
-    sector: string;
-    change: number;
-}
+import { RefreshCw, TrendingUp } from 'lucide-react';
 
 const MarketHeatmap: React.FC = () => {
-    const [sectors, setSectors] = useState<SectorData[]>([]);
+    const [sectors, setSectors] = useState<{ sector: string; change: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
         setLoading(true);
         const data = await getSectorPerformance();
-        // Sort by performance (best to worst)
-        setSectors(data.sort((a: SectorData, b: SectorData) => b.change - a.change));
+        setSectors(data.sort((a, b) => b.change - a.change));
         setLoading(false);
     };
 
@@ -23,43 +17,70 @@ const MarketHeatmap: React.FC = () => {
         fetchData();
     }, []);
 
+    const getColor = (change: number) => {
+        const intensity = Math.min(Math.abs(change) / 3, 1);
+        if (change > 0) {
+            return `rgba(52, 168, 83, ${0.1 + intensity * 0.6})`;
+        } else {
+            return `rgba(234, 67, 53, ${0.1 + intensity * 0.6})`;
+        }
+    };
+
+    const getTextColor = (change: number) => {
+        return change > 0 ? '#34a853' : '#ea4335';
+    };
+
     if (loading) {
-        return <div className="h-48 flex items-center justify-center text-[#bdc1c6] animate-pulse">Caricamento Heatmap...</div>;
+        return (
+            <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6">
+                <div className="h-6 w-32 bg-[#1a1a1a] rounded mb-6 animate-pulse"></div>
+                <div className="grid grid-cols-2 gap-3">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-20 bg-[#1a1a1a] rounded-xl animate-pulse"></div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="bg-[#1e1f20] border border-[#3c4043] rounded-xl overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-[#3c4043] bg-[#202124] flex justify-between items-center">
-                <h3 className="font-bold text-white text-sm uppercase tracking-wider">Market Heatmap</h3>
-                <button onClick={fetchData} className="text-[#bdc1c6] hover:text-white transition-colors">
-                    <RefreshCw size={14} />
+        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl overflow-hidden h-full">
+            <div className="p-6 border-b border-[#2a2a2a] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-accent-500/10 rounded-lg">
+                        <TrendingUp className="text-accent-500" size={20} />
+                    </div>
+                    <h3 className="font-bold text-white text-lg">Market Heatmap</h3>
+                </div>
+                <button
+                    onClick={fetchData}
+                    className="p-2 hover:bg-[#1a1a1a] rounded-lg transition-colors group"
+                >
+                    <RefreshCw size={18} className="text-gray-400 group-hover:text-accent-500 group-hover:rotate-180 transition-all duration-500" />
                 </button>
             </div>
 
-            <div className="flex-1 p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 overflow-y-auto">
-                {sectors.map((s) => {
-                    const isPositive = s.change >= 0;
-                    const intensity = Math.min(Math.abs(s.change) / 3, 1); // Max intensity at 3%
-                    // Calculate color based on intensity
-                    // Green: 30, 142, 62 (approx #1e8e3e)
-                    // Red: 217, 48, 37 (approx #d93025)
-                    const bgStyle = isPositive
-                        ? `rgba(30, 142, 62, ${0.2 + (intensity * 0.8)})`
-                        : `rgba(217, 48, 37, ${0.2 + (intensity * 0.8)})`;
-
-                    return (
+            <div className="p-6">
+                <div className="grid grid-cols-2 gap-3">
+                    {sectors.map((s) => (
                         <div
                             key={s.sector}
-                            className="rounded-lg p-3 flex flex-col justify-between min-h-[80px] transition-transform hover:scale-[1.02] cursor-default"
-                            style={{ backgroundColor: bgStyle }}
+                            className="relative p-4 rounded-xl transition-all hover:scale-105 cursor-pointer group overflow-hidden"
+                            style={{ backgroundColor: getColor(s.change) }}
                         >
-                            <span className="text-xs font-bold text-white/90 leading-tight">{s.sector}</span>
-                            <span className="text-lg font-bold text-white self-end">
-                                {isPositive ? '+' : ''}{s.change.toFixed(2)}%
-                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="relative z-10">
+                                <p className="text-xs font-bold text-white mb-1 line-clamp-2">{s.sector}</p>
+                                <p
+                                    className="text-lg font-mono font-bold"
+                                    style={{ color: getTextColor(s.change) }}
+                                >
+                                    {s.change > 0 ? '+' : ''}{s.change.toFixed(2)}%
+                                </p>
+                            </div>
                         </div>
-                    );
-                })}
+                    ))}
+                </div>
             </div>
         </div>
     );
