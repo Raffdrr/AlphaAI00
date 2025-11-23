@@ -23,10 +23,6 @@ const App: React.FC = () => {
       addToWatchlist,
       portfolio,
       watchlist,
-      marketData
-      addToWatchlist,
-      portfolio,
-      watchlist,
       marketData,
       isFocusMode
    } = useStore();
