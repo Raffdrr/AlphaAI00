@@ -62,6 +62,47 @@ export const chatWithAlphaVision = async (
   }
 };
 
+// Quick stock analysis function
+export const analyzeStock = async (ticker: string, marketData: MarketData | null): Promise<string> => {
+  if (!marketData) {
+    return "Dati di mercato non disponibili per l'analisi.";
+  }
+
+  try {
+    const prompt = `
+      Analizza il titolo ${ticker} con i seguenti dati:
+      
+      Prezzo: $${marketData.price}
+      Variazione: ${marketData.changePercent}%
+      Volume: ${marketData.volume}
+      Market Cap: ${marketData.marketCap}
+      P/E Ratio: ${marketData.peRatio}
+      RSI: ${marketData.rsi}
+      
+      News recenti:
+      ${marketData.news?.slice(0, 3).map(n => `- ${n.title}`).join('\n') || 'Nessuna notizia disponibile'}
+      
+      Fornisci un'analisi concisa che includa:
+      1. Sentiment generale (Bullish/Bearish/Neutral)
+      2. Analisi tecnica rapida
+      3. Considerazioni sulle news
+      4. Raccomandazione (Buy/Hold/Sell)
+      
+      Usa un tono professionale ma accessibile. Formatta con Markdown.
+    `;
+
+    const response = await getAiClient().models.generateContent({
+      model: model,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+
+    return response.text || "Impossibile generare l'analisi al momento.";
+  } catch (error) {
+    console.error("Analysis Error", error);
+    return "Errore nell'analisi. Verifica che la chiave API Gemini sia configurata correttamente nelle Impostazioni.";
+  }
+};
+
 // -- NEW: Global Portfolio Chat --
 export const chatWithPortfolio = async (
   history: { role: 'user' | 'ai', text: string }[],
