@@ -4,48 +4,96 @@ import Sidebar from './components/layout/Sidebar';
 import MobileNav from './components/layout/MobileNav';
 import Dashboard from './components/dashboard/Dashboard';
 import PortfolioTable from './components/portfolio/PortfolioTable';
+import Calendar from './components/calendar/Calendar';
+import SocialFeed from './components/social/SocialFeed';
+import Analytics from './components/analytics/Analytics';
 import SettingsModal from './components/SettingsModal';
 import AddAssetModal from './components/AddAssetModal';
 import CompanyDetailView from './components/CompanyDetailView';
 import { TabType, CompanyInfo, PortfolioItem, WatchlistItem } from './types';
-import { searchCompanies, getCompanyInfo, getCompanyInfoSync } from './services/marketService';
+import { searchCompanies, getCompanyInfo } from './services/marketService';
+import { fetchEarningsCalendar, fetchDividendCalendar, fetchEconomicCalendar, convertToCalendarEvents } from './services/calendarService';
 import { Plus } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 
-const REFRESH_RATE = 15000; // 15s refresh for real data
+const REFRESH_RATE = 15000; // 15s refresh
 
 const App: React.FC = () => {
-   // Global Store
    const {
       activeTab,
+      setActiveTab,
       refreshMarketData,
+      portfolios,
+      activePortfolioId,
       addToPortfolio,
       addToWatchlist,
-      portfolio,
       watchlist,
       marketData,
-      isFocusMode
+      isFocusMode,
+      calendarEvents,
+      addCalendarEvent,
+      userProfile,
+      setUserProfile
    } = useStore();
 
-   // Local UI State
+   const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
+
    const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-   // Add Asset Form State (kept local as it's transient)
    const [inputTicker, setInputTicker] = useState('');
    const [inputQty, setInputQty] = useState('');
    const [inputCost, setInputCost] = useState('');
    const [suggestions, setSuggestions] = useState<CompanyInfo[]>([]);
 
-   // Initial Data Load & Polling
+   // Initialize user profile if not exists
+   useEffect(() => {
+      if (!userProfile) {
+         setUserProfile({
+            id: 'user-1',
+            username: 'Investor',
+            displayName: 'Alpha Investor',
+            bio: 'Passionate about investing',
+            joinedAt: Date.now(),
+            isPublic: true,
+            stats: {
+               followers: 0,
+               following: 0,
+               posts: 0,
+            }
+         });
+      }
+   }, [userProfile, setUserProfile]);
+
+   // Load calendar events
+   useEffect(() => {
+      const loadCalendarEvents = async () => {
+         if (calendarEvents.length === 0) {
+            try {
+               const [earnings, dividends, economic] = await Promise.all([
+                  fetchEarningsCalendar(),
+                  fetchDividendCalendar(),
+                  fetchEconomicCalendar(),
+               ]);
+
+               const events = convertToCalendarEvents(earnings, dividends, economic);
+               events.forEach(event => addCalendarEvent(event));
+            } catch (error) {
+               console.error('Failed to load calendar events:', error);
+            }
+         }
+      };
+
+      loadCalendarEvents();
+   }, [calendarEvents.length, addCalendarEvent]);
+
+   // Market data refresh
    useEffect(() => {
       refreshMarketData();
       const interval = setInterval(refreshMarketData, REFRESH_RATE);
       return () => clearInterval(interval);
    }, [refreshMarketData]);
 
-   // Handlers
    const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setInputTicker(val);
@@ -62,116 +110,122 @@ const App: React.FC = () => {
       setSuggestions([]);
    };
 
-   const handleAddSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!inputTicker) return;
+   const handleAddAsset = async () => {
+      if (!inputTicker.trim()) return;
 
-      const info = await getCompanyInfo(inputTicker);
+      const ticker = inputTicker.toUpperCase();
+      const info = await getCompanyInfo(ticker);
 
-      if (activeTab === TabType.PORTFOLIO) {
-         if (portfolio.some(p => p.ticker === info.symbol)) { alert("Asset già presente"); return; }
-         const newItem: PortfolioItem = {
+      if (activeTab === TabType.PORTFOLIO && activePortfolio) {
+         const item: PortfolioItem = {
             id: Date.now().toString(),
-            ticker: info.symbol,
+            ticker,
             name: info.name,
-            quantity: inputQty ? parseFloat(inputQty) : 0,
-            avgCost: inputCost ? parseFloat(inputCost) : 0
+            quantity: parseFloat(inputQty) || 0,
+            avgCost: parseFloat(inputCost) || 0,
          };
-         addToPortfolio(newItem);
-      } else {
-         if (watchlist.some(w => w.ticker === info.symbol)) { alert("Asset già presente"); return; }
-         const newItem: WatchlistItem = { id: Date.now().toString(), ticker: info.symbol, name: info.name };
-         addToWatchlist(newItem);
+         addToPortfolio(activePortfolio.id, item);
+      } else if (activeTab === TabType.WATCHLIST) {
+         const item: WatchlistItem = {
+            id: Date.now().toString(),
+            ticker,
+            name: info.name,
+         };
+         addToWatchlist(item);
       }
 
-      // Reset & Close
       setInputTicker('');
       setInputQty('');
       setInputCost('');
       setIsAddModalOpen(false);
    };
 
-   // View
-   if (selectedTicker) {
-      return (
-         <ErrorBoundary>
-            <CompanyDetailView
-               ticker={selectedTicker}
-               data={marketData[selectedTicker]}
-               info={getCompanyInfoSync(selectedTicker)}
-               onClose={() => setSelectedTicker(null)}
-               onAnalyze={() => { }} // TODO: Hook up global chat if needed
-            />
-         </ErrorBoundary>
-      );
-   }
+   const renderContent = () => {
+      if (selectedTicker) {
+         const data = marketData[selectedTicker];
+         const info = data ? { symbol: selectedTicker, name: selectedTicker } : null;
+
+         return (
+            <ErrorBoundary>
+               <CompanyDetailView
+                  ticker={selectedTicker}
+                  data={data || null}
+                  info={info}
+                  onClose={() => setSelectedTicker(null)}
+                  onAnalyze={() => { }}
+               />
+            </ErrorBoundary>
+         );
+      }
+
+      switch (activeTab) {
+         case TabType.PORTFOLIO:
+            return (
+               <div className="space-y-8">
+                  <Dashboard />
+                  <PortfolioTable onSelectAsset={setSelectedTicker} />
+               </div>
+            );
+
+         case TabType.WATCHLIST:
+            return <PortfolioTable onSelectAsset={setSelectedTicker} />;
+
+         case TabType.CALENDAR:
+            return <Calendar />;
+
+         case TabType.SOCIAL:
+            return <SocialFeed />;
+
+         case TabType.ANALYTICS:
+            return <Analytics />;
+
+         default:
+            return <Dashboard />;
+      }
+   };
 
    return (
-      <div className="flex h-screen bg-black text-gray-200 font-sans selection:bg-blue-500/30">
-
+      <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
          <Sidebar
             onAddAsset={() => setIsAddModalOpen(true)}
             onOpenSettings={() => setIsSettingsOpen(true)}
          />
 
-         <main className="flex-1 flex flex-col overflow-hidden relative">
-            {/* Header (Mobile Only) */}
-            <header className="md:hidden flex items-center justify-between p-4 border-b border-[#3c4043] bg-[#202124]">
-               <span className="text-lg font-medium">Alpha-Vision</span>
-               <button onClick={() => setIsSettingsOpen(true)} className="p-2">
-                  {/* Settings Icon */}
-               </button>
-            </header>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 scroll-smooth">
-               <div className="max-w-6xl mx-auto">
-
-                  {activeTab === TabType.PORTFOLIO && <Dashboard />}
-
-                  <div className="mb-4 flex items-center justify-between">
-                     <h2 className="text-xl font-medium">
-                        {activeTab === TabType.PORTFOLIO ? 'Il tuo Portfolio' : (activeTab === TabType.WATCHLIST ? 'Watchlist' : 'Avvisi Smart')}
-                     </h2>
-                  </div>
-
-                  <PortfolioTable onSelectAsset={setSelectedTicker} />
-
-               </div>
+         <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto p-6">
+               {renderContent()}
             </div>
-
-            {/* Mobile FAB */}
-            <button
-               onClick={() => setIsAddModalOpen(true)}
-               className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#8ab4f8] text-[#202124] rounded-full shadow-lg flex items-center justify-center z-50"
-            >
-               <Plus size={28} />
-            </button>
-
-            <MobileNav />
          </main>
 
-         {/* Modals */}
-         <SettingsModal
-            isOpen={isSettingsOpen}
-            onClose={() => setIsSettingsOpen(false)}
-         />
+         <MobileNav />
 
-         <AddAssetModal
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            activeTab={activeTab}
-            searchTerm={inputTicker}
-            onSearchChange={handleSearchChange}
-            suggestions={suggestions}
-            onSelectSuggestion={selectSuggestion}
-            qty={inputQty}
-            setQty={setInputQty}
-            cost={inputCost}
-            setCost={setInputCost}
-            onAdd={handleAddSubmit}
-         />
+         {isAddModalOpen && (
+            <AddAssetModal
+               inputTicker={inputTicker}
+               inputQty={inputQty}
+               inputCost={inputCost}
+               suggestions={suggestions}
+               onSearchChange={handleSearchChange}
+               onSelectSuggestion={selectSuggestion}
+               onQtyChange={(e) => setInputQty(e.target.value)}
+               onCostChange={(e) => setInputCost(e.target.value)}
+               onAdd={handleAddAsset}
+               onClose={() => setIsAddModalOpen(false)}
+               isPortfolio={activeTab === TabType.PORTFOLIO}
+            />
+         )}
 
+         {isSettingsOpen && (
+            <SettingsModal onClose={() => setIsSettingsOpen(false)} />
+         )}
+
+         {/* Floating Add Button (Mobile) */}
+         <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full shadow-lg shadow-accent-500/30 flex items-center justify-center text-white z-40"
+         >
+            <Plus size={24} strokeWidth={2.5} />
+         </button>
       </div>
    );
 };

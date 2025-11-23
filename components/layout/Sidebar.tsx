@@ -1,6 +1,6 @@
 import React from 'react';
-import { LayoutDashboard, List, Bell, Plus, Settings, TrendingUp, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '../../store/useStore';
+import { LayoutDashboard, List, Bell, Plus, Settings, TrendingUp, Eye, EyeOff, Calendar as CalendarIcon, Users, BarChart3 } from 'lucide-react';
 import { TabType } from '../../types';
 
 interface SidebarProps {
@@ -14,12 +14,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
     const navItems = [
         { id: TabType.PORTFOLIO, label: 'Portfolio', icon: LayoutDashboard },
         { id: TabType.WATCHLIST, label: 'Watchlist', icon: List },
+        { id: TabType.CALENDAR, label: 'Calendar', icon: CalendarIcon },
+        { id: TabType.SOCIAL, label: 'Social', icon: Users },
+        { id: TabType.ANALYTICS, label: 'Analytics', icon: BarChart3 },
         { id: TabType.ALERTS, label: 'Alerts', icon: Bell },
     ];
 
     return (
         <aside className="w-72 bg-[#0a0a0a] border-r border-[#2a2a2a] flex-col h-screen hidden md:flex sticky top-0">
-            {/* Logo Area */}
+            {/* Logo */}
             <div className="p-6 flex items-center gap-3 border-b border-[#2a2a2a]">
                 <div className="relative">
                     <div className="p-3 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl shadow-lg shadow-accent-500/30">
@@ -29,11 +32,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
                 </div>
                 <div>
                     <h1 className="text-xl font-bold text-white tracking-tight">Alpha-Vision</h1>
-                    <p className="text-xs text-gray-500">Financial Intelligence</p>
+                    <p className="text-xs text-gray-500">Ultimate Edition</p>
                 </div>
             </div>
 
-            {/* Add Asset Button */}
+            {/* Add Button */}
             <div className="p-4">
                 <button
                     onClick={onAddAsset}
