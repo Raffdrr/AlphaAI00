@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
 import { CandleData } from '../../types';
 
@@ -15,67 +15,70 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<"Area"> | ISeriesApi<"Candlestick"> | null>(null);
     const comparisonSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+    const [isReady, setIsReady] = useState(false);
 
     // Initialize chart once
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        const chart = createChart(chartContainerRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#bdc1c6',
-            },
-            grid: {
-                vertLines: { color: '#3c4043', visible: false },
-                horzLines: { color: '#3c4043', visible: false },
-            },
-            width: chartContainerRef.current.clientWidth,
-            height: 400,
-            timeScale: {
-                borderColor: '#3c4043',
-                timeVisible: true,
-            },
-            rightPriceScale: {
-                borderColor: '#3c4043',
-            },
-        });
+        try {
+            const chart = createChart(chartContainerRef.current, {
+                layout: {
+                    background: { type: ColorType.Solid, color: 'transparent' },
+                    textColor: '#bdc1c6',
+                },
+                grid: {
+                    vertLines: { color: '#3c4043', visible: true },
+                    horzLines: { color: '#3c4043', visible: true },
+                },
+                width: chartContainerRef.current.clientWidth,
+                height: 400,
+                timeScale: {
+                    borderColor: '#3c4043',
+                    timeVisible: true,
+                },
+                rightPriceScale: {
+                    borderColor: '#3c4043',
+                },
+            });
 
-        chartRef.current = chart;
+            chartRef.current = chart;
+            setIsReady(true);
 
-        const handleResize = () => {
-            if (chartContainerRef.current && chartRef.current) {
-                chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-            }
-        };
+            const handleResize = () => {
+                if (chartContainerRef.current && chartRef.current) {
+                    chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+                }
+            };
 
-        window.addEventListener('resize', handleResize);
+            window.addEventListener('resize', handleResize);
 
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            if (chartRef.current) {
-                chartRef.current.remove();
-                chartRef.current = null;
-            }
-        };
+            return () => {
+                window.removeEventListener('resize', handleResize);
+                if (chartRef.current) {
+                    chartRef.current.remove();
+                    chartRef.current = null;
+                }
+                setIsReady(false);
+            };
+        } catch (error) {
+            console.error('Chart initialization error:', error);
+        }
     }, []);
 
     // Update chart data when props change
     useEffect(() => {
-        if (!chartRef.current) return;
-
-        // Remove old series if exists
-        if (seriesRef.current) {
-            try {
-                chartRef.current.removeSeries(seriesRef.current);
-                seriesRef.current = null;
-            } catch (e) {
-                console.error('Error removing series:', e);
-            }
-        }
-
-        const color = isPositive ? '#81c995' : '#f28b82';
+        if (!chartRef.current || !isReady) return;
 
         try {
+            // Remove old series if exists
+            if (seriesRef.current) {
+                chartRef.current.removeSeries(seriesRef.current);
+                seriesRef.current = null;
+            }
+
+            const color = isPositive ? '#81c995' : '#f28b82';
+
             if (chartType === 'LINE' && data && data.length > 0) {
                 const areaSeries = chartRef.current.addAreaSeries({
                     lineColor: color,
@@ -84,8 +87,10 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
                     lineWidth: 2,
                 });
 
+                // Generate proper timestamps
+                const now = Math.floor(Date.now() / 1000);
                 const chartData = data.map((val, i) => ({
-                    time: (Date.now() / 1000) - ((data.length - i) * 300) as Time,
+                    time: (now - ((data.length - i - 1) * 300)) as Time,
                     value: val
                 }));
 
@@ -100,8 +105,10 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
                     wickDownColor: '#f28b82',
                 });
 
+                // Generate proper timestamps
+                const now = Math.floor(Date.now() / 1000);
                 const validCandles = candles.map((c, i) => ({
-                    time: (Date.now() / 1000) - ((candles.length - i) * 300) as Time,
+                    time: (now - ((candles.length - i - 1) * 300)) as Time,
                     open: c.open,
                     high: c.high,
                     low: c.low,
@@ -115,11 +122,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
             // Handle comparison data
             if (comparisonData && comparisonData.length > 0) {
                 if (comparisonSeriesRef.current) {
-                    try {
-                        chartRef.current.removeSeries(comparisonSeriesRef.current);
-                    } catch (e) {
-                        console.error('Error removing comparison series:', e);
-                    }
+                    chartRef.current.removeSeries(comparisonSeriesRef.current);
                 }
 
                 const lineSeries = chartRef.current.addLineSeries({
@@ -128,36 +131,36 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
                     lineStyle: 2,
                 });
 
+                const now = Math.floor(Date.now() / 1000);
                 const compChartData = comparisonData.map((val, i) => ({
-                    time: (Date.now() / 1000) - ((comparisonData.length - i) * 300) as Time,
+                    time: (now - ((comparisonData.length - i - 1) * 300)) as Time,
                     value: val
                 }));
 
                 lineSeries.setData(compChartData);
                 comparisonSeriesRef.current = lineSeries;
             } else if (comparisonSeriesRef.current) {
-                try {
-                    chartRef.current.removeSeries(comparisonSeriesRef.current);
-                    comparisonSeriesRef.current = null;
-                } catch (e) {
-                    console.error('Error removing comparison series:', e);
-                }
+                chartRef.current.removeSeries(comparisonSeriesRef.current);
+                comparisonSeriesRef.current = null;
             }
 
             chartRef.current.timeScale().fitContent();
         } catch (error) {
-            console.error('Error updating chart:', error);
+            console.error('Chart update error:', error);
         }
 
-    }, [data, candles, chartType, isPositive, comparisonData]);
+    }, [data, candles, chartType, isPositive, comparisonData, isReady]);
 
     // Show loading state if no data
     if ((!data || data.length === 0) && (!candles || candles.length === 0)) {
         return (
-            <div className="w-full h-[400px] flex items-center justify-center text-[#bdc1c6]">
-                <div className="text-center">
-                    <div className="animate-pulse mb-2">Caricamento grafico...</div>
-                    <div className="text-xs text-gray-500">Attendere i dati di mercato</div>
+            <div className="w-full h-[400px] flex items-center justify-center text-[#bdc1c6] bg-[#0a0a0a] rounded-xl border border-[#2a2a2a]">
+                <div className="text-center space-y-4">
+                    <div className="w-16 h-16 border-4 border-accent-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <div>
+                        <div className="text-sm font-bold mb-1">Caricamento grafico...</div>
+                        <div className="text-xs text-gray-500">Attendere i dati di mercato</div>
+                    </div>
                 </div>
             </div>
         );
