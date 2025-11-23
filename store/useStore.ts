@@ -12,6 +12,7 @@ interface AppState {
 
     // UI State
     activeTab: TabType;
+    isFocusMode: boolean;
 
     // Settings
     apiKeys: {
@@ -26,7 +27,9 @@ interface AppState {
     removeFromWatchlist: (id: string) => void;
     setApiKeys: (keys: { fmp: string; gemini: string }) => void;
     updateMarketData: (ticker: string, data: MarketData) => void;
+    updateMarketData: (ticker: string, data: MarketData) => void;
     setActiveTab: (tab: TabType) => void;
+    toggleFocusMode: () => void;
 
     // Async Actions
     refreshMarketData: () => Promise<void>;
@@ -39,7 +42,9 @@ export const useStore = create<AppState>()(
             watchlist: [],
             alerts: [],
             marketData: {},
+            marketData: {},
             activeTab: TabType.PORTFOLIO, // Default
+            isFocusMode: false,
             apiKeys: { fmp: '0F4bHcgWqjf6Bs2X2A6nEkLp4FQxy2fA', gemini: '' },
 
             addToPortfolio: (item) => set((state) => ({ portfolio: [...state.portfolio, item] })),
@@ -55,6 +60,7 @@ export const useStore = create<AppState>()(
             })),
 
             setActiveTab: (tab) => set({ activeTab: tab }),
+            toggleFocusMode: () => set((state) => ({ isFocusMode: !state.isFocusMode })),
 
             refreshMarketData: async () => {
                 const { portfolio, watchlist, alerts, updateMarketData } = get();

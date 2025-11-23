@@ -7,12 +7,14 @@ interface StockChartProps {
     candles: CandleData[];
     chartType: 'LINE' | 'CANDLE';
     isPositive: boolean;
+    comparisonData?: number[];
 }
 
-const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPositive }) => {
+const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPositive, comparisonData }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<"Area"> | ISeriesApi<"Candlestick"> | null>(null);
+    const comparisonSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -102,9 +104,33 @@ const StockChart: React.FC<StockChartProps> = ({ data, candles, chartType, isPos
             seriesRef.current = candleSeries;
         }
 
+        if (comparisonData && comparisonData.length > 0) {
+            // Remove old comparison series if exists
+            if (comparisonSeriesRef.current) {
+                chartRef.current.removeSeries(comparisonSeriesRef.current);
+            }
+
+            const lineSeries = chartRef.current.addLineSeries({
+                color: '#c58af9', // Purple for comparison
+                lineWidth: 2,
+                lineStyle: 2, // Dashed
+            });
+
+            const compChartData = comparisonData.map((val, i) => ({
+                time: (Date.now() / 1000) - ((comparisonData.length - i) * 300) as Time,
+                value: val
+            }));
+
+            lineSeries.setData(compChartData);
+            comparisonSeriesRef.current = lineSeries;
+        } else if (comparisonSeriesRef.current) {
+            chartRef.current.removeSeries(comparisonSeriesRef.current);
+            comparisonSeriesRef.current = null;
+        }
+
         chartRef.current.timeScale().fitContent();
 
-    }, [data, candles, chartType, isPositive]);
+    }, [data, candles, chartType, isPositive, comparisonData]);
 
     return <div ref={chartContainerRef} className="w-full h-[400px]" />;
 };

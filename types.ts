@@ -26,8 +26,8 @@ export interface MarketData {
   marketCap?: string;
   peRatio?: string;
   dividendYield?: string;
-  rsi: number; 
-  news: NewsItem[]; 
+  rsi: number;
+  news: NewsItem[];
   chartData: number[]; // Intraday simulated prices (Legacy Line)
   candles: CandleData[]; // OHLC Data
 }
@@ -36,8 +36,8 @@ export interface PortfolioItem {
   id: string;
   ticker: string;
   name?: string;
-  quantity?: number; 
-  avgCost?: number; 
+  quantity?: number;
+  avgCost?: number;
 }
 
 export interface WatchlistItem {
@@ -79,6 +79,12 @@ export interface ChatMessage {
   role: 'user' | 'ai';
   text: string;
   timestamp: number;
+}
+
+export interface FinancialData {
+  year: string;
+  revenue: number;
+  netIncome: number;
 }
 
 export enum TabType {

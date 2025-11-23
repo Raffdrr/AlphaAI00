@@ -27,6 +27,65 @@ export const getMarketOverview = async () => {
   return { gainers: [], losers: [], active: [] };
 };
 
+export const getSectorPerformance = async () => {
+  if (isRealDataEnabled()) {
+    try {
+      const url = `${BASE_URL}/sector-performance?apikey=${getApiKey()}`;
+      const data = await fetchWithCache(url);
+      if (data && Array.isArray(data)) {
+        return data.map((item: any) => ({
+          sector: item.sector,
+          change: parseFloat(item.changesPercentage)
+        }));
+      }
+    } catch (e) {
+      console.error("Sector Fetch Failed", e);
+    }
+  }
+
+  // Mock Data
+  const sectors = [
+    'Technology', 'Healthcare', 'Financials', 'Consumer Discretionary',
+    'Communication Services', 'Industrials', 'Consumer Staples',
+    'Energy', 'Utilities', 'Real Estate', 'Materials'
+  ];
+  return sectors.map(s => ({
+    sector: s,
+    change: parseFloat(((Math.random() * 6) - 3).toFixed(2)) // -3% to +3%
+  }));
+};
+
+export const getCompanyFinancials = async (ticker: string) => {
+  if (isRealDataEnabled()) {
+    try {
+      const url = `${BASE_URL}/income-statement/${ticker}?limit=4&apikey=${getApiKey()}`;
+      const data = await fetchWithCache(url);
+      if (data && Array.isArray(data)) {
+        return data.reverse().map((item: any) => ({
+          year: item.calendarYear,
+          revenue: item.revenue,
+          netIncome: item.netIncome
+        }));
+      }
+    } catch (e) {
+      console.error("Financials Fetch Failed", e);
+    }
+  }
+
+  // Mock Data
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 4 }).map((_, i) => {
+    const year = (currentYear - 4 + i).toString();
+    const baseRev = 10000000000 + (Math.random() * 50000000000);
+    const growth = 1 + (i * 0.1); // 10% growth per year mock
+    return {
+      year,
+      revenue: baseRev * growth,
+      netIncome: (baseRev * growth) * 0.2 // 20% margin
+    };
+  });
+};
+
 // --- MOCK DATA (FALLBACK) ---
 const STOCK_DB: CompanyInfo[] = [
   {

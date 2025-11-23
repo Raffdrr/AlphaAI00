@@ -10,6 +10,7 @@ import CompanyDetailView from './components/CompanyDetailView';
 import { TabType, CompanyInfo, PortfolioItem, WatchlistItem } from './types';
 import { searchCompanies, getCompanyInfo, getCompanyInfoSync } from './services/marketService';
 import { Plus } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const REFRESH_RATE = 15000; // 15s refresh for real data
 
@@ -23,6 +24,11 @@ const App: React.FC = () => {
       portfolio,
       watchlist,
       marketData
+      addToWatchlist,
+      portfolio,
+      watchlist,
+      marketData,
+      isFocusMode
    } = useStore();
 
    // Local UI State
@@ -92,13 +98,15 @@ const App: React.FC = () => {
    // View
    if (selectedTicker) {
       return (
-         <CompanyDetailView
-            ticker={selectedTicker}
-            data={marketData[selectedTicker]}
-            info={getCompanyInfoSync(selectedTicker)}
-            onClose={() => setSelectedTicker(null)}
-            onAnalyze={() => { }} // TODO: Hook up global chat if needed
-         />
+         <ErrorBoundary>
+            <CompanyDetailView
+               ticker={selectedTicker}
+               data={marketData[selectedTicker]}
+               info={getCompanyInfoSync(selectedTicker)}
+               onClose={() => setSelectedTicker(null)}
+               onAnalyze={() => { }} // TODO: Hook up global chat if needed
+            />
+         </ErrorBoundary>
       );
    }
 

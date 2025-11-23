@@ -2,10 +2,12 @@ import React, { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { ArrowUpRight, ArrowDownRight, DollarSign, PieChart } from 'lucide-react';
 import MarketOverview from './MarketOverview';
+import MarketHeatmap from './MarketHeatmap';
+import PortfolioAllocation from '../analysis/PortfolioAllocation';
 import NewsFeed from './NewsFeed';
 
 const Dashboard: React.FC = () => {
-    const { portfolio, marketData } = useStore();
+    const { portfolio, marketData, isFocusMode } = useStore();
 
     const stats = useMemo(() => {
         let totalValue = 0;
@@ -34,7 +36,16 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <MarketOverview />
+            {!isFocusMode && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                        <MarketOverview />
+                    </div>
+                    <div>
+                        <MarketHeatmap />
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Total Value Card */}
@@ -79,7 +90,17 @@ const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            <NewsFeed />
+            {!isFocusMode && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <PortfolioAllocation />
+                    {/* Placeholder for future Comparison Tool or similar */}
+                    <div className="bg-[#1e1f20] border border-[#3c4043] rounded-xl p-6 flex items-center justify-center text-[#bdc1c6] border-dashed">
+                        <span className="text-sm">Altri strumenti in arrivo...</span>
+                    </div>
+                </div>
+            )}
+
+            {!isFocusMode && <NewsFeed />}
         </div>
     );
 };

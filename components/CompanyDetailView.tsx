@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MarketData, CompanyInfo, ChatMessage } from '../types';
-import { getChartDataForRange } from '../services/marketService';
+import { getChartDataForRange, fetchMarketData } from '../services/marketService';
 import { chatWithAlphaVision } from '../services/geminiService';
+import { useStore } from '../store/useStore';
 import StockChart from './charts/StockChart';
 import AnalystRatings from './analysis/AnalystRatings';
 import FearGreedIndex from './analysis/FearGreedIndex';
+import FinancialsChart from './analysis/FinancialsChart';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 interface CompanyDetailViewProps {
@@ -23,16 +25,30 @@ const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({ ticker, data, inf
    const [candles, setCandles] = useState<any[]>([]); // Using any for lightweight-charts compatibility
    const [chartType, setChartType] = useState<ChartType>('LINE');
 
+   // Comparison State
+   const [comparisonTicker, setComparisonTicker] = useState<string>('');
+   const [comparisonData, setComparisonData] = useState<number[]>([]);
+
    // Chat State
    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
    const [chatInput, setChatInput] = useState('');
    const [isChatLoading, setIsChatLoading] = useState(false);
    const chatContainerRefInternal = useRef<HTMLDivElement>(null);
+   const { updateMarketData } = useStore();
+
+   // Fetch data if missing
+   useEffect(() => {
+      if (!data && ticker) {
+         fetchMarketData(ticker).then(newData => {
+            updateMarketData(ticker, newData);
+         });
+      }
+   }, [data, ticker, updateMarketData]);
 
    // Initialize chart data
    useEffect(() => {
       if (data) {
-         setChartPoints(data.chartData);
+         setChartPoints(data.chartData || []);
          setCandles(data.candles || []);
          setChatMessages([{
             id: 'welcome', role: 'ai', timestamp: Date.now(),
@@ -47,7 +63,24 @@ const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({ ticker, data, inf
          const newData = await getChartDataForRange(data.price, range, ticker);
          setChartPoints(newData.line);
          setCandles(newData.candles);
+
+         // Refresh comparison if active
+         if (comparisonTicker) {
+            handleCompare(comparisonTicker, range);
+         }
       }
+   };
+
+   const handleCompare = async (compTicker: string, range: string = selectedRange) => {
+      setComparisonTicker(compTicker);
+      if (!compTicker) {
+         setComparisonData([]);
+         return;
+      }
+      // Fetch comparison data (using same service, assuming base price 100 for mock if needed)
+      // In real app, we'd fetch real price. For now, we reuse getChartDataForRange
+      const res = await getChartDataForRange(100, range, compTicker);
+      setComparisonData(res.line);
    };
 
    const handleSendMessage = async (text: string) => {
@@ -96,9 +129,9 @@ const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({ ticker, data, inf
                   <div>
                      <h1 className="text-3xl font-bold text-white mb-1">{info.name}</h1>
                      <div className="flex items-baseline gap-4">
-                        <span className="text-5xl font-medium text-white tracking-tight">${data.price.toFixed(2)}</span>
+                        <span className="text-5xl font-medium text-white tracking-tight">${data.price?.toFixed(2) ?? '--'}</span>
                         <span className={`text-xl font-medium ${isPositive ? 'text-[#81c995]' : 'text-[#f28b82]'}`}>
-                           {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
+                           {isPositive ? '+' : ''}{data.changePercent?.toFixed(2) ?? '--'}%
                         </span>
                      </div>
                   </div>
@@ -118,9 +151,31 @@ const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({ ticker, data, inf
                      </div>
                   </div>
 
+                  {/* Comparison Selector */}
+                  <div className="flex items-center gap-2">
+                     <span className="text-xs text-[#bdc1c6] uppercase font-bold">Confronta:</span>
+                     <select
+                        value={comparisonTicker}
+                        onChange={(e) => handleCompare(e.target.value)}
+                        className="bg-[#303134] text-white text-xs rounded px-2 py-1 border-none focus:ring-1 focus:ring-[#8ab4f8]"
+                     >
+                        <option value="">Nessuno</option>
+                        <option value="SPY">S&P 500 (SPY)</option>
+                        <option value="QQQ">Nasdaq (QQQ)</option>
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="GLD">Gold (GLD)</option>
+                     </select>
+                  </div>
+
                   {/* Chart */}
                   <div className="bg-[#1e1f20] border border-[#3c4043] rounded-xl p-4 h-[450px]">
-                     <StockChart data={chartPoints} candles={candles} chartType={chartType} isPositive={isPositive} />
+                     <StockChart
+                        data={chartPoints}
+                        candles={candles}
+                        chartType={chartType}
+                        isPositive={isPositive}
+                        comparisonData={comparisonData}
+                     />
                   </div>
                </div>
 
@@ -156,9 +211,11 @@ const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({ ticker, data, inf
                   {/* New Analysis Components */}
                   <AnalystRatings
                      buy={12} hold={5} sell={1}
-                     targetPrice={data.price * 1.15}
-                     currentPrice={data.price}
+                     targetPrice={(data.price || 100) * 1.15}
+                     currentPrice={data.price || 100}
                   />
+
+                  <FinancialsChart ticker={ticker} />
 
                   <FearGreedIndex value={65} />
                </div>

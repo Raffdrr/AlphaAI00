@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, List, Bell, Plus, Settings, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, List, Bell, Plus, Settings, TrendingUp, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { TabType } from '../../types';
 
@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
-    const { activeTab, setActiveTab } = useStore();
+    const { activeTab, setActiveTab, isFocusMode, toggleFocusMode } = useStore();
 
     const navItems = [
         { id: TabType.PORTFOLIO, label: 'Portfolio', icon: LayoutDashboard },
@@ -58,7 +58,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="p-4 border-t border-[#222]">
+            <div className="p-4 border-t border-[#222] space-y-2">
+                <button
+                    onClick={toggleFocusMode}
+                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${isFocusMode ? 'text-blue-400 bg-[#111]' : 'text-gray-400 hover:text-white hover:bg-[#111]'}`}
+                >
+                    {isFocusMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                    <span>Focus Mode</span>
+                </button>
                 <button
                     onClick={onOpenSettings}
                     className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-[#111] transition-colors text-sm font-medium"
