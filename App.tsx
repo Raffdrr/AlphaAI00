@@ -103,7 +103,7 @@ const App: React.FC = () => {
    }
 
    return (
-      <div className="flex h-screen bg-[#202124] text-[#e8eaed] font-sans selection:bg-[#8ab4f8]/30">
+      <div className="flex h-screen bg-black text-gray-200 font-sans selection:bg-blue-500/30">
 
          <Sidebar
             onAddAsset={() => setIsAddModalOpen(true)}

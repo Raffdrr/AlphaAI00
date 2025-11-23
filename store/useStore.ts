@@ -40,7 +40,7 @@ export const useStore = create<AppState>()(
             alerts: [],
             marketData: {},
             activeTab: TabType.PORTFOLIO, // Default
-            apiKeys: { fmp: '', gemini: '' },
+            apiKeys: { fmp: '0F4bHcgWqjf6Bs2X2A6nEkLp4FQxy2fA', gemini: '' },
 
             addToPortfolio: (item) => set((state) => ({ portfolio: [...state.portfolio, item] })),
             removeFromPortfolio: (id) => set((state) => ({ portfolio: state.portfolio.filter((i) => i.id !== id) })),

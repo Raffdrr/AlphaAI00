@@ -18,13 +18,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
     ];
 
     return (
-        <aside className="w-72 bg-[#1e1f20] border-r border-[#3c4043] flex-col h-screen hidden md:flex sticky top-0">
+        <aside className="w-72 bg-[#050505] border-r border-[#222] flex-col h-screen hidden md:flex sticky top-0">
             {/* Logo Area */}
-            <div className="p-6 flex items-center gap-3 border-b border-[#3c4043]">
-                <div className="p-2 bg-blue-600/20 rounded-lg text-blue-400">
+            <div className="p-6 flex items-center gap-3 border-b border-[#222]">
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                     <TrendingUp size={24} />
                 </div>
-                <span className="text-xl font-medium text-white tracking-tight">Alpha-Vision</span>
+                <span className="text-xl font-bold text-white tracking-tight">Alpha-Vision</span>
             </div>
 
             {/* Navigation */}
@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
                 <div className="mb-6">
                     <button
                         onClick={onAddAsset}
-                        className="w-full flex items-center justify-center gap-2 bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#202124] font-medium py-3 rounded-full transition-colors shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-xl transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)]"
                     >
                         <Plus size={20} />
                         <span>Nuovo Asset</span>
@@ -45,12 +45,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-4 px-4 py-3 rounded-r-full text-sm font-medium transition-colors border-l-4 ${isActive
-                                    ? 'bg-[#3c4043]/50 text-[#8ab4f8] border-[#8ab4f8]'
-                                    : 'text-[#bdc1c6] hover:bg-[#3c4043]/30 border-transparent hover:text-white'
+                            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
+                                ? 'bg-[#111] text-blue-400 shadow-[inset_0_0_0_1px_#333]'
+                                : 'text-gray-400 hover:bg-[#111] hover:text-white'
                                 }`}
                         >
-                            <item.icon size={20} />
+                            <item.icon size={20} className={isActive ? "drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]" : ""} />
                             {item.label}
                         </button>
                     );
@@ -58,10 +58,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="p-4 border-t border-[#3c4043]">
+            <div className="p-4 border-t border-[#222]">
                 <button
                     onClick={onOpenSettings}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[#bdc1c6] hover:text-white hover:bg-[#3c4043]/30 transition-colors text-sm font-medium"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-[#111] transition-colors text-sm font-medium"
                 >
                     <Settings size={20} />
                     <span>Impostazioni</span>

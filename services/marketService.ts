@@ -9,6 +9,24 @@ const BASE_URL = 'https://financialmodelingprep.com/api/v3';
 const getApiKey = () => useStore.getState().apiKeys.fmp;
 const isRealDataEnabled = () => getApiKey().length > 0;
 
+export const getMarketOverview = async () => {
+  if (isRealDataEnabled()) {
+    try {
+      const key = getApiKey();
+      const [gainers, losers, active] = await Promise.all([
+        fetchWithCache(`${BASE_URL}/stock_market/gainers?apikey=${key}`),
+        fetchWithCache(`${BASE_URL}/stock_market/losers?apikey=${key}`),
+        fetchWithCache(`${BASE_URL}/stock_market/actives?apikey=${key}`)
+      ]);
+      return { gainers: gainers?.slice(0, 5) || [], losers: losers?.slice(0, 5) || [], active: active?.slice(0, 5) || [] };
+    } catch (e) {
+      console.error("Market Overview Fetch Failed", e);
+      return { gainers: [], losers: [], active: [] };
+    }
+  }
+  return { gainers: [], losers: [], active: [] };
+};
+
 // --- MOCK DATA (FALLBACK) ---
 const STOCK_DB: CompanyInfo[] = [
   {
