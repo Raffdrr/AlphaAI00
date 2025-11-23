@@ -5,9 +5,9 @@ export interface NewsItem {
   source: string;
   timeAgo: string;
   imageUrl?: string;
-  sentimentScore: number; // -1 to 1 (Negative to Positive)
+  sentimentScore: number;
   sentimentLabel: 'Positive' | 'Negative' | 'Neutral';
-  associatedChartIndex?: number; // To map onto the chart
+  associatedChartIndex?: number;
 }
 
 export interface CandleData {
@@ -28,8 +28,30 @@ export interface MarketData {
   dividendYield?: string;
   rsi: number;
   news: NewsItem[];
-  chartData: number[]; // Intraday simulated prices (Legacy Line)
-  candles: CandleData[]; // OHLC Data
+  chartData: number[];
+  candles: CandleData[];
+}
+
+// Enhanced Portfolio Types
+export interface Transaction {
+  id: string;
+  portfolioId: string;
+  ticker: string;
+  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'SPLIT';
+  quantity: number;
+  price: number;
+  fees?: number;
+  date: number; // timestamp
+  notes?: string;
+}
+
+export interface TaxLot {
+  id: string;
+  ticker: string;
+  quantity: number;
+  costBasis: number;
+  purchaseDate: number;
+  isLongTerm: boolean;
 }
 
 export interface PortfolioItem {
@@ -38,12 +60,144 @@ export interface PortfolioItem {
   name?: string;
   quantity?: number;
   avgCost?: number;
+  taxLots?: TaxLot[];
+  firstPurchaseDate?: number;
+}
+
+export interface Portfolio {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: number;
+  items: PortfolioItem[];
+  transactions: Transaction[];
+  isDefault: boolean;
+}
+
+export interface PortfolioPerformance {
+  portfolioId: string;
+  totalValue: number;
+  totalCost: number;
+  totalPnL: number;
+  totalPnLPercent: number;
+  dayChange: number;
+  dayChangePercent: number;
+  weekChange: number;
+  monthChange: number;
+  yearChange: number;
+  allTimeHigh: number;
+  allTimeLow: number;
+  sharpeRatio?: number;
+  beta?: number;
+  volatility?: number;
 }
 
 export interface WatchlistItem {
   id: string;
   ticker: string;
   name?: string;
+  addedAt?: number;
+  notes?: string;
+}
+
+// Events Types (StockEvents-inspired)
+export interface EarningsEvent {
+  id: string;
+  ticker: string;
+  companyName: string;
+  date: number;
+  time?: 'BMO' | 'AMC' | 'Unknown'; // Before Market Open / After Market Close
+  fiscalQuarter: string;
+  fiscalYear: number;
+  estimatedEPS?: number;
+  actualEPS?: number;
+  surprise?: number;
+  surprisePercent?: number;
+  estimatedRevenue?: number;
+  actualRevenue?: number;
+}
+
+export interface DividendEvent {
+  id: string;
+  ticker: string;
+  companyName: string;
+  exDate: number;
+  paymentDate: number;
+  recordDate: number;
+  amount: number;
+  frequency: 'Monthly' | 'Quarterly' | 'Semi-Annual' | 'Annual';
+  yield?: number;
+}
+
+export interface EconomicEvent {
+  id: string;
+  title: string;
+  country: string;
+  category: 'GDP' | 'Inflation' | 'Employment' | 'Fed' | 'Other';
+  date: number;
+  importance: 'Low' | 'Medium' | 'High';
+  actual?: string;
+  forecast?: string;
+  previous?: string;
+  impact?: 'Bullish' | 'Bearish' | 'Neutral';
+}
+
+export interface CalendarEvent {
+  id: string;
+  type: 'EARNINGS' | 'DIVIDEND' | 'ECONOMIC' | 'SPLIT' | 'IPO';
+  date: number;
+  ticker?: string;
+  title: string;
+  description?: string;
+  importance: 'Low' | 'Medium' | 'High';
+  data: EarningsEvent | DividendEvent | EconomicEvent | any;
+}
+
+// Social Types (Getquin-inspired)
+export interface UserProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  bio?: string;
+  avatar?: string;
+  investmentStyle?: string;
+  joinedAt: number;
+  isPublic: boolean;
+  stats: {
+    followers: number;
+    following: number;
+    posts: number;
+    totalReturn?: number;
+    portfolioValue?: number;
+  };
+}
+
+export interface Post {
+  id: string;
+  userId: string;
+  username: string;
+  userAvatar?: string;
+  content: string;
+  ticker?: string;
+  type: 'TEXT' | 'TRADE' | 'IDEA' | 'QUESTION';
+  likes: number;
+  comments: number;
+  shares: number;
+  createdAt: number;
+  isLiked?: boolean;
+  images?: string[];
+  tags?: string[];
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  userId: string;
+  username: string;
+  userAvatar?: string;
+  content: string;
+  likes: number;
+  createdAt: number;
 }
 
 export interface AnalysisResult {
@@ -67,7 +221,7 @@ export interface CompanyInfo {
 export interface SmartAlert {
   id: string;
   ticker: string;
-  condition: string; // "If CEO resigns", "If sentiment drops below neutral"
+  condition: string;
   isActive: boolean;
   lastChecked?: number;
   status?: 'triggered' | 'safe' | 'pending';
@@ -87,8 +241,35 @@ export interface FinancialData {
   netIncome: number;
 }
 
+// Analytics Types
+export interface SectorAllocation {
+  sector: string;
+  value: number;
+  percentage: number;
+  change: number;
+}
+
+export interface AssetAllocation {
+  type: 'Stocks' | 'Bonds' | 'Cash' | 'Crypto' | 'Other';
+  value: number;
+  percentage: number;
+}
+
+export interface RiskMetrics {
+  sharpeRatio: number;
+  sortinoRatio: number;
+  beta: number;
+  alpha: number;
+  volatility: number;
+  maxDrawdown: number;
+  var95: number; // Value at Risk 95%
+}
+
 export enum TabType {
   PORTFOLIO = 'PORTFOLIO',
   WATCHLIST = 'WATCHLIST',
-  ALERTS = 'ALERTS' // Added for Mobile Nav
+  ALERTS = 'ALERTS',
+  CALENDAR = 'CALENDAR',
+  SOCIAL = 'SOCIAL',
+  ANALYTICS = 'ANALYTICS'
 }
