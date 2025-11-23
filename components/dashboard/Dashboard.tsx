@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import MarketOverview from './MarketOverview';
 import MarketHeatmap from './MarketHeatmap';
 import PortfolioAllocation from '../analysis/PortfolioAllocation';
@@ -45,87 +45,84 @@ const Dashboard: React.FC = () => {
     }, [portfolioItems, marketData]);
 
     return (
-        <div className="space-y-8">
-            {/* Hero Section - Portfolio Summary */}
-            <div className="relative bg-gradient-to-br from-[#141414] via-[#0a0a0a] to-[#000000] border border-[#2a2a2a] rounded-3xl p-8 overflow-hidden">
-                {/* Gradient Glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-gradient-to-b from-accent-500/10 to-transparent blur-3xl"></div>
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-accent-500/10 rounded-lg">
-                            <DollarSign className="text-accent-500" size={24} />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-medium text-gray-400">Valore Totale Portfolio</h2>
-                            <p className="text-5xl font-bold font-mono text-white mt-1">
-                                ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
+        <div className="space-y-6">
+            {/* Hero Stats - Getquin Style Clean Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Total Value */}
+                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-[#737373]">Total Value</span>
+                        <div className="p-2 bg-[#fafafa] dark:bg-[#1e1e1e] rounded-lg">
+                            <DollarSign size={18} className="text-[#f97316]" />
                         </div>
                     </div>
+                    <p className="text-3xl font-bold text-[#0a0a0a] dark:text-white font-mono">
+                        ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-sm text-[#737373] mt-2">
+                        {portfolioItems.length} assets
+                    </p>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Total P&L */}
-                        <div className="bg-[#0a0a0a]/50 backdrop-blur-sm rounded-2xl p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-400">P&L Totale</span>
-                                {stats.isPositive ? (
-                                    <ArrowUpRight className="text-green-400" size={20} />
-                                ) : (
-                                    <ArrowDownRight className="text-red-400" size={20} />
-                                )}
-                            </div>
-                            <p className={`text-3xl font-bold font-mono ${stats.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                {stats.isPositive ? '+' : ''}${Math.abs(stats.totalPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
-                            <p className={`text-sm font-bold mt-1 ${stats.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                {stats.isPositive ? '+' : ''}{stats.totalPnlPercent.toFixed(2)}%
-                            </p>
+                {/* Total P&L */}
+                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-[#737373]">Total P&L</span>
+                        <div className={`p-2 rounded-lg ${stats.isPositive ? 'bg-[#f0fdf4]' : 'bg-[#fef2f2]'}`}>
+                            {stats.isPositive ? (
+                                <TrendingUp size={18} className="text-[#22c55e]" />
+                            ) : (
+                                <TrendingDown size={18} className="text-[#ef4444]" />
+                            )}
                         </div>
+                    </div>
+                    <p className={`text-3xl font-bold font-mono ${stats.isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                        {stats.isPositive ? '+' : ''}${Math.abs(stats.totalPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-sm font-semibold ${stats.isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                            {stats.isPositive ? '+' : ''}{stats.totalPnlPercent.toFixed(2)}%
+                        </span>
+                        <span className="text-sm text-[#737373]">all time</span>
+                    </div>
+                </div>
 
-                        {/* Day Change */}
-                        <div className="bg-[#0a0a0a]/50 backdrop-blur-sm rounded-2xl p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-400">Variazione Giornaliera</span>
-                                <Activity className="text-accent-500" size={20} />
-                            </div>
-                            <p className={`text-3xl font-bold font-mono ${stats.isDayPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                {stats.isDayPositive ? '+' : ''}${Math.abs(stats.dayChangeValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
-                            <p className={`text-sm font-bold mt-1 ${stats.isDayPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                {stats.isDayPositive ? '+' : ''}{stats.dayChangePercent.toFixed(2)}%
-                            </p>
+                {/* Day Change */}
+                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-[#737373]">Today</span>
+                        <div className="p-2 bg-[#fafafa] dark:bg-[#1e1e1e] rounded-lg">
+                            <Activity size={18} className="text-[#f97316]" />
                         </div>
-
-                        {/* Holdings */}
-                        <div className="bg-[#0a0a0a]/50 backdrop-blur-sm rounded-2xl p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-400">Holdings</span>
-                                <TrendingUp className="text-accent-500" size={20} />
-                            </div>
-                            <p className="text-3xl font-bold font-mono text-white">
-                                {portfolioItems.length}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Asset nel portfolio
-                            </p>
-                        </div>
+                    </div>
+                    <p className={`text-3xl font-bold font-mono ${stats.isDayPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                        {stats.isDayPositive ? '+' : ''}${Math.abs(stats.dayChangeValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-sm font-semibold ${stats.isDayPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                            {stats.isDayPositive ? '+' : ''}{stats.dayChangePercent.toFixed(2)}%
+                        </span>
+                        {stats.isDayPositive ? (
+                            <ArrowUpRight size={14} className="text-[#22c55e]" />
+                        ) : (
+                            <ArrowDownRight size={14} className="text-[#ef4444]" />
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Market Overview & Heatmap */}
+            {/* Market Overview & Allocation */}
             {!isFocusMode && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <MarketOverview />
-                    <MarketHeatmap />
+                    <PortfolioAllocation />
                 </div>
             )}
 
-            {/* Portfolio Allocation & News */}
+            {/* Heatmap & News */}
             {!isFocusMode && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <PortfolioAllocation />
+                    <MarketHeatmap />
                     <NewsFeed />
                 </div>
             )}
