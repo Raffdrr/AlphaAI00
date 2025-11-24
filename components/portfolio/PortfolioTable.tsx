@@ -1,7 +1,9 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
 import { TabType } from '../../types';
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, ChevronRight } from 'lucide-react';
+import { GlassCard } from '../ui/GlassCard';
+import { MetricBadge } from '../ui/MetricBadge';
 
 interface PortfolioTableProps {
     onSelectAsset: (ticker: string) => void;
@@ -15,52 +17,51 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
 
     if (items.length === 0) {
         return (
-            <div className="bg-[#141414] border border-[#2a2a2a] border-dashed rounded-2xl p-12 text-center">
+            <GlassCard className="p-12 text-center border-dashed border-[var(--border-light)]">
                 <div className="max-w-md mx-auto space-y-4">
-                    <div className="p-4 bg-accent-500/10 rounded-2xl inline-block">
-                        <TrendingUp className="text-accent-500" size={48} />
+                    <div className="p-4 bg-[rgba(99,102,241,0.1)] rounded-2xl inline-block">
+                        <TrendingUp className="text-[var(--primary)]" size={48} />
                     </div>
                     <h3 className="text-xl font-bold text-white">
-                        {activeTab === TabType.PORTFOLIO ? 'Portfolio Vuoto' : 'Watchlist Vuota'}
+                        {activeTab === TabType.PORTFOLIO ? 'Portfolio Empty' : 'Watchlist Empty'}
                     </h3>
-                    <p className="text-gray-500">
-                        Clicca su "Nuovo Asset" per iniziare a tracciare i tuoi investimenti
+                    <p className="text-[var(--text-muted)]">
+                        Click "Add Asset" to start tracking your investments
                     </p>
                 </div>
-            </div>
+            </GlassCard>
         );
     }
 
     return (
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <GlassCard noPadding className="overflow-hidden">
             {/* Table Header */}
-            <div className="hidden md:grid md:grid-cols-6 gap-4 p-6 border-b border-[#2a2a2a] bg-[#0a0a0a]">
+            <div className="hidden md:grid md:grid-cols-6 gap-4 px-6 py-4 border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
                 <div className="col-span-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Asset</span>
+                    <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Asset</span>
                 </div>
                 <div className="text-right">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Prezzo</span>
+                    <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Price</span>
                 </div>
                 <div className="text-right">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Variazione</span>
+                    <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Change</span>
                 </div>
                 {activeTab === TabType.PORTFOLIO && (
                     <>
                         <div className="text-right">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Holdings</span>
+                            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Holdings</span>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">P&L</span>
+                            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">P&L</span>
                         </div>
                     </>
                 )}
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-[#2a2a2a]">
+            <div className="divide-y divide-[var(--border-subtle)]">
                 {items.map((item) => {
                     const data = marketData[item.ticker];
-                    const isPositive = (data?.changePercent || 0) >= 0;
 
                     let pnl = 0;
                     let pnlPercent = 0;
@@ -70,69 +71,65 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
                         pnl = currentValue - costBasis;
                         pnlPercent = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
                     }
-                    const isPnlPositive = pnl >= 0;
 
                     return (
                         <div
                             key={item.id}
                             onClick={() => onSelectAsset(item.ticker)}
-                            className="grid grid-cols-1 md:grid-cols-6 gap-4 p-6 hover:bg-[#1a1a1a] transition-colors cursor-pointer group"
+                            className="grid grid-cols-1 md:grid-cols-6 gap-4 px-6 py-4 hover:bg-[rgba(255,255,255,0.03)] transition-colors cursor-pointer group"
                         >
                             {/* Asset Info */}
-                            <div className="col-span-1 md:col-span-2 flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-lg shadow-accent-500/20">
-                                    <span className="text-white font-bold text-lg">{item.ticker.charAt(0)}</span>
+                            <div className="col-span-1 md:col-span-2 flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-xl flex items-center justify-center shadow-sm text-white font-bold">
+                                    {item.ticker.charAt(0)}
                                 </div>
-                                <div>
-                                    <p className="font-bold text-white group-hover:text-accent-500 transition-colors">{item.ticker}</p>
-                                    <p className="text-sm text-gray-500 line-clamp-1">{item.name}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-white group-hover:text-[var(--primary)] transition-colors">
+                                        {item.ticker}
+                                    </p>
+                                    <p className="text-sm text-[var(--text-muted)] truncate">{item.name}</p>
                                 </div>
+                                <ChevronRight size={16} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
 
                             {/* Price */}
-                            <div className="text-left md:text-right">
-                                <p className="text-sm text-gray-400 md:hidden mb-1">Prezzo</p>
-                                <p className="font-mono font-bold text-white">${data?.price?.toFixed(2) || '0.00'}</p>
+                            <div className="text-left md:text-right flex flex-col justify-center">
+                                <p className="text-sm text-[var(--text-muted)] md:hidden mb-1">Price</p>
+                                <p className="font-mono font-semibold text-white">
+                                    ${data?.price?.toFixed(2) || '0.00'}
+                                </p>
                             </div>
 
                             {/* Change */}
-                            <div className="text-left md:text-right">
-                                <p className="text-sm text-gray-400 md:hidden mb-1">Variazione</p>
+                            <div className="text-left md:text-right flex flex-col justify-center items-start md:items-end">
+                                <p className="text-sm text-[var(--text-muted)] md:hidden mb-1">Change</p>
                                 <div className="flex md:flex-col md:items-end gap-2">
-                                    <span className={`font-mono font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                        {isPositive ? '+' : ''}{data?.changeAmount?.toFixed(2) || '0.00'}
+                                    <span className={`font-mono font-semibold text-sm mb-1 ${(data?.changeAmount || 0) >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                                        {(data?.changeAmount || 0) >= 0 ? '+' : ''}{data?.changeAmount?.toFixed(2) || '0.00'}
                                     </span>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isPositive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                                        }`}>
-                                        {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                                        {Math.abs(data?.changePercent || 0).toFixed(2)}%
-                                    </span>
+                                    <MetricBadge value={data?.changePercent || 0} size="sm" />
                                 </div>
                             </div>
 
                             {/* Portfolio Specific */}
                             {activeTab === TabType.PORTFOLIO && 'quantity' in item && 'avgCost' in item && (
                                 <>
-                                    <div className="text-left md:text-right">
-                                        <p className="text-sm text-gray-400 md:hidden mb-1">Holdings</p>
-                                        <p className="font-mono font-bold text-white">
+                                    <div className="text-left md:text-right flex flex-col justify-center">
+                                        <p className="text-sm text-[var(--text-muted)] md:hidden mb-1">Holdings</p>
+                                        <p className="font-mono font-semibold text-white">
                                             {item.quantity} @ ${item.avgCost?.toFixed(2)}
                                         </p>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-[var(--text-muted)]">
                                             ${((data?.price || 0) * (item.quantity || 0)).toFixed(2)}
                                         </p>
                                     </div>
-                                    <div className="text-left md:text-right">
-                                        <p className="text-sm text-gray-400 md:hidden mb-1">P&L</p>
+                                    <div className="text-left md:text-right flex flex-col justify-center items-start md:items-end">
+                                        <p className="text-sm text-[var(--text-muted)] md:hidden mb-1">P&L</p>
                                         <div className="flex md:flex-col md:items-end gap-2">
-                                            <span className={`font-mono font-bold ${isPnlPositive ? 'text-green-400' : 'text-red-400'}`}>
-                                                {isPnlPositive ? '+' : ''}${Math.abs(pnl).toFixed(2)}
+                                            <span className={`font-mono font-semibold text-sm mb-1 ${pnl >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                                                {pnl >= 0 ? '+' : ''}${Math.abs(pnl).toFixed(2)}
                                             </span>
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isPnlPositive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                                                }`}>
-                                                {isPnlPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                                                {Math.abs(pnlPercent).toFixed(2)}%
-                                            </span>
+                                            <MetricBadge value={pnlPercent} size="sm" />
                                         </div>
                                     </div>
                                 </>
@@ -141,7 +138,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ onSelectAsset }) => {
                     );
                 })}
             </div>
-        </div>
+        </GlassCard>
     );
 };
 

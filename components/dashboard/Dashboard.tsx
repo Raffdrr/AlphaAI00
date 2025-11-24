@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { TrendingUp, TrendingDown, DollarSign, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, Calendar as CalendarIcon } from 'lucide-react';
 import MarketOverview from './MarketOverview';
 import MarketHeatmap from './MarketHeatmap';
 import PortfolioAllocation from '../analysis/PortfolioAllocation';
 import NewsFeed from './NewsFeed';
+import { GlassCard } from '../ui/GlassCard';
+import { MetricBadge } from '../ui/MetricBadge';
+import { Timeline, TimelineEvent } from '../ui/Timeline';
 
 const Dashboard: React.FC = () => {
-    const { portfolios, activePortfolioId, marketData, isFocusMode } = useStore();
+    const { portfolios, activePortfolioId, marketData, isFocusMode, calendarEvents } = useStore();
 
     const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
     const portfolioItems = activePortfolio?.items || [];
@@ -44,88 +47,117 @@ const Dashboard: React.FC = () => {
         };
     }, [portfolioItems, marketData]);
 
+    // Transform calendar events for Timeline
+    const timelineEvents: TimelineEvent[] = useMemo(() => {
+        return calendarEvents.slice(0, 5).map(e => ({
+            id: e.id,
+            date: new Date(e.date),
+            title: e.symbol,
+            subtitle: e.title,
+            type: e.type === 'DIVIDEND' ? 'dividend' : 'earnings',
+            amount: e.type === 'DIVIDEND' ? `$${e.estimate?.toFixed(2)}` : undefined
+        }));
+    }, [calendarEvents]);
+
     return (
-        <div className="space-y-6">
-            {/* Hero Stats - Getquin Style Clean Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Total Value */}
-                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-[#737373]">Total Value</span>
-                        <div className="p-2 bg-[#fafafa] dark:bg-[#1e1e1e] rounded-lg">
-                            <DollarSign size={18} className="text-[#f97316]" />
-                        </div>
+        <div className="space-y-8 animate-in">
+            {/* Header / Net Worth Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Net Worth Card */}
+                <GlassCard className="lg:col-span-2 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Activity size={120} />
                     </div>
-                    <p className="text-3xl font-bold text-[#0a0a0a] dark:text-white font-mono">
-                        ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-sm text-[#737373] mt-2">
-                        {portfolioItems.length} assets
-                    </p>
-                </div>
 
-                {/* Total P&L */}
-                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-[#737373]">Total P&L</span>
-                        <div className={`p-2 rounded-lg ${stats.isPositive ? 'bg-[#f0fdf4]' : 'bg-[#fef2f2]'}`}>
-                            {stats.isPositive ? (
-                                <TrendingUp size={18} className="text-[#22c55e]" />
-                            ) : (
-                                <TrendingDown size={18} className="text-[#ef4444]" />
-                            )}
+                    <div className="relative z-10">
+                        <h2 className="text-[var(--text-muted)] text-sm font-medium uppercase tracking-wider mb-1">Net Worth</h2>
+                        <div className="flex items-baseline gap-4">
+                            <h1 className="text-5xl font-bold font-mono text-white tracking-tight">
+                                ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </h1>
+                            <MetricBadge value={stats.dayChangePercent} size="md" />
                         </div>
-                    </div>
-                    <p className={`text-3xl font-bold font-mono ${stats.isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                        {stats.isPositive ? '+' : ''}${Math.abs(stats.totalPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className={`text-sm font-semibold ${stats.isPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                            {stats.isPositive ? '+' : ''}{stats.totalPnlPercent.toFixed(2)}%
-                        </span>
-                        <span className="text-sm text-[#737373]">all time</span>
-                    </div>
-                </div>
 
-                {/* Day Change */}
-                <div className="bg-white dark:bg-[#161616] border border-[#e5e5e5] dark:border-[#262626] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-[#737373]">Today</span>
-                        <div className="p-2 bg-[#fafafa] dark:bg-[#1e1e1e] rounded-lg">
-                            <Activity size={18} className="text-[#f97316]" />
+                        <div className="mt-6 flex gap-8">
+                            <div>
+                                <div className="text-xs text-[var(--text-muted)] mb-1">Total Profit</div>
+                                <div className={`text-lg font-mono font-medium ${stats.isPositive ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                                    {stats.isPositive ? '+' : ''}${Math.abs(stats.totalPnl).toLocaleString()}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-xs text-[var(--text-muted)] mb-1">Daily Change</div>
+                                <div className={`text-lg font-mono font-medium ${stats.isDayPositive ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                                    {stats.isDayPositive ? '+' : ''}${Math.abs(stats.dayChangeValue).toLocaleString()}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p className={`text-3xl font-bold font-mono ${stats.isDayPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                        {stats.isDayPositive ? '+' : ''}${Math.abs(stats.dayChangeValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className={`text-sm font-semibold ${stats.isDayPositive ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                            {stats.isDayPositive ? '+' : ''}{stats.dayChangePercent.toFixed(2)}%
-                        </span>
-                        {stats.isDayPositive ? (
-                            <ArrowUpRight size={14} className="text-[#22c55e]" />
-                        ) : (
-                            <ArrowDownRight size={14} className="text-[#ef4444]" />
-                        )}
-                    </div>
+                </GlassCard>
+
+                {/* Quick Actions / Mini Stats */}
+                <div className="space-y-6">
+                    <GlassCard className="h-full flex flex-col justify-center">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 rounded-lg bg-[rgba(99,102,241,0.1)] text-[var(--primary)]">
+                                <TrendingUp size={20} />
+                            </div>
+                            <span className="text-sm font-medium text-[var(--text-muted)]">Performance</span>
+                        </div>
+                        <div className="text-2xl font-bold text-white">
+                            {stats.totalPnlPercent.toFixed(2)}%
+                        </div>
+                        <div className="text-xs text-[var(--text-muted)]">All time return</div>
+                    </GlassCard>
                 </div>
             </div>
 
-            {/* Market Overview & Allocation */}
-            {!isFocusMode && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <MarketOverview />
-                    <PortfolioAllocation />
-                </div>
-            )}
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Timeline & Allocation */}
+                <div className="space-y-8">
+                    <GlassCard>
+                        <Timeline events={timelineEvents} title="Upcoming Events" />
+                        {timelineEvents.length === 0 && (
+                            <div className="text-center py-8 text-[var(--text-muted)] text-sm">
+                                No upcoming events
+                            </div>
+                        )}
+                    </GlassCard>
 
-            {/* Heatmap & News */}
-            {!isFocusMode && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <MarketHeatmap />
-                    <NewsFeed />
+                    {!isFocusMode && (
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-4">Allocation</h3>
+                            <PortfolioAllocation />
+                        </GlassCard>
+                    )}
                 </div>
-            )}
+
+                {/* Center/Right Column: Market & News */}
+                <div className="lg:col-span-2 space-y-8">
+                    {!isFocusMode && (
+                        <>
+                            <GlassCard>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-lg font-semibold">Market Overview</h3>
+                                </div>
+                                <MarketOverview />
+                            </GlassCard>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <GlassCard>
+                                    <h3 className="text-lg font-semibold mb-4">Market Heatmap</h3>
+                                    <MarketHeatmap />
+                                </GlassCard>
+                                <GlassCard>
+                                    <h3 className="text-lg font-semibold mb-4">Latest News</h3>
+                                    <NewsFeed />
+                                </GlassCard>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

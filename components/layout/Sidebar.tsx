@@ -8,7 +8,8 @@ import {
     BarChart3,
     Settings,
     Plus,
-    User
+    User,
+    PieChart
 } from 'lucide-react';
 import { TabType } from '../../types';
 
@@ -19,11 +20,10 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
     const { activeTab, setActiveTab, userProfile, portfolios, activePortfolioId } = useStore();
-
     const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
 
     const navItems = [
-        { id: TabType.PORTFOLIO, label: 'Portfolio', icon: LayoutDashboard },
+        { id: TabType.PORTFOLIO, label: 'Portfolio', icon: PieChart },
         { id: TabType.WATCHLIST, label: 'Watchlist', icon: List },
         { id: TabType.CALENDAR, label: 'Events', icon: CalendarIcon },
         { id: TabType.SOCIAL, label: 'Community', icon: Users },
@@ -31,99 +31,81 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
     ];
 
     return (
-        <aside className="w-64 bg-white dark:bg-[#161616] border-r border-[#e5e5e5] dark:border-[#262626] flex-col h-screen hidden md:flex">
-            {/* Logo & Brand */}
-            <div className="p-6 border-b border-[#e5e5e5] dark:border-[#262626]">
+        <aside className="w-72 bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] flex-col h-screen hidden md:flex z-50">
+            {/* Brand */}
+            <div className="p-8 pb-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#f97316] to-[#ea580c] rounded-xl flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">A</span>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                        <span className="text-white font-bold text-xl font-display">A</span>
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-[#0a0a0a] dark:text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                            Alpha Vision
+                        <h1 className="text-xl font-bold text-white tracking-tight font-display">
+                            Alpha<span className="text-[var(--primary)]">Vision</span>
                         </h1>
-                        <p className="text-xs text-[#737373]">Ultimate Edition</p>
+                        <p className="text-xs text-[var(--text-muted)] font-mono">PRO TERMINAL</p>
                     </div>
                 </div>
             </div>
 
-            {/* User Profile Card - Getquin Style */}
-            {userProfile && (
-                <div className="p-4 border-b border-[#e5e5e5] dark:border-[#262626]">
-                    <div className="flex items-center gap-3 p-3 bg-[#fafafa] dark:bg-[#1e1e1e] rounded-xl">
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#f97316] to-[#ea580c] rounded-full flex items-center justify-center">
-                            <User size={20} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-[#0a0a0a] dark:text-white truncate">
-                                {userProfile.displayName}
-                            </p>
-                            <p className="text-xs text-[#737373] truncate">
-                                @{userProfile.username}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Add Button - Prominent */}
-            <div className="p-4">
-                <button
-                    onClick={onAddAsset}
-                    className="w-full flex items-center justify-center gap-2 bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3 rounded-full transition-all shadow-sm hover:shadow-md"
-                >
-                    <Plus size={18} strokeWidth={2.5} />
-                    <span>Add Asset</span>
-                </button>
-            </div>
-
-            {/* Navigation - Clean & Minimal */}
-            <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+            {/* Navigation */}
+            <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
+                <div className="text-xs font-bold text-[var(--text-muted)] px-4 mb-2 uppercase tracking-wider">Menu</div>
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id;
                     return (
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                    ? 'bg-[#fff7ed] dark:bg-[#2a1810] text-[#ea580c] dark:text-[#fb923c]'
-                                    : 'text-[#525252] dark:text-[#a3a3a3] hover:bg-[#f5f5f5] dark:hover:bg-[#1e1e1e] hover:text-[#0a0a0a] dark:hover:text-white'
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden
+                                ${isActive
+                                    ? 'text-white bg-[rgba(255,255,255,0.05)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
+                                    : 'text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]'
                                 }`}
                         >
-                            <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            {isActive && (
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--primary)] rounded-r-full shadow-[0_0_10px_var(--primary)]" />
+                            )}
+                            <item.icon
+                                size={20}
+                                className={`transition-colors ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-dim)] group-hover:text-white'}`}
+                            />
                             <span>{item.label}</span>
                         </button>
                     );
                 })}
             </nav>
 
-            {/* Portfolio Stats - StockEvents Style */}
+            {/* Portfolio Summary */}
             {activePortfolio && (
-                <div className="p-4 border-t border-[#e5e5e5] dark:border-[#262626]">
-                    <div className="bg-[#fafafa] dark:bg-[#1e1e1e] rounded-xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-[#737373]">Portfolio</span>
-                            <span className="text-xs font-semibold text-[#f97316]">{activePortfolio.items.length} assets</span>
-                        </div>
-                        <div>
-                            <p className="text-xs text-[#737373] mb-1">Total Value</p>
-                            <p className="text-lg font-bold text-[#0a0a0a] dark:text-white font-mono">
-                                $0.00
-                            </p>
-                        </div>
+                <div className="p-4 mx-4 mb-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)]">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-[var(--text-muted)]">Total Balance</span>
+                        <span className="text-xs text-[var(--success)] font-mono">+2.4%</span>
                     </div>
+                    <div className="text-xl font-bold font-mono text-white">$124,592.00</div>
                 </div>
             )}
 
-            {/* Settings */}
-            <div className="p-4 border-t border-[#e5e5e5] dark:border-[#262626]">
+            {/* User & Settings */}
+            <div className="p-4 border-t border-[var(--border-subtle)] bg-[rgba(0,0,0,0.2)]">
                 <button
-                    onClick={onOpenSettings}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#525252] dark:text-[#a3a3a3] hover:bg-[#f5f5f5] dark:hover:bg-[#1e1e1e] hover:text-[#0a0a0a] dark:hover:text-white transition-all text-sm font-medium"
+                    onClick={onAddAsset}
+                    className="w-full mb-4 flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold py-3 rounded-xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.5)] hover:-translate-y-0.5"
                 >
-                    <Settings size={20} />
-                    <span>Settings</span>
+                    <Plus size={18} strokeWidth={2.5} />
+                    <span>Quick Add</span>
                 </button>
+
+                <div className="flex items-center gap-3 px-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={onOpenSettings}>
+                    <div className="w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border-light)] flex items-center justify-center">
+                        <User size={14} className="text-[var(--text-muted)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{userProfile?.displayName || 'User'}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">Free Plan</p>
+                    </div>
+                    <Settings size={16} className="text-[var(--text-muted)]" />
+                </div>
             </div>
         </aside>
     );
