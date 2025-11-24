@@ -185,48 +185,50 @@ const App: React.FC = () => {
    };
 
    return (
-      <div className="flex h-screen bg-[var(--bg-app)] overflow-hidden">
-         <Sidebar
-            onAddAsset={() => setIsAddModalOpen(true)}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-         />
-
-         <main className="flex-1 overflow-y-auto">
-            <div className="max-w-[1600px] mx-auto p-4 md:p-8">
-               {renderContent()}
-            </div>
-         </main>
-
-         <MobileNav />
-
-         {isAddModalOpen && (
-            <AddAssetModal
-               inputTicker={inputTicker}
-               inputQty={inputQty}
-               inputCost={inputCost}
-               suggestions={suggestions}
-               onSearchChange={handleSearchChange}
-               onSelectSuggestion={selectSuggestion}
-               onQtyChange={(e) => setInputQty(e.target.value)}
-               onCostChange={(e) => setInputCost(e.target.value)}
-               onAdd={handleAddAsset}
-               onClose={() => setIsAddModalOpen(false)}
-               isPortfolio={activeTab === TabType.PORTFOLIO}
+      <ErrorBoundary>
+         <div className="flex h-screen bg-[var(--bg-app)] overflow-hidden font-[var(--font-stack)]">
+            <Sidebar
+               onAddAsset={() => setIsAddModalOpen(true)}
+               onOpenSettings={() => setIsSettingsOpen(true)}
             />
-         )}
 
-         {isSettingsOpen && (
-            <SettingsModal onClose={() => setIsSettingsOpen(false)} />
-         )}
+            <main className="flex-1 overflow-y-auto relative">
+               <div className="max-w-[1600px] mx-auto p-6 md:p-10 animate-fluent">
+                  {renderContent()}
+               </div>
+            </main>
 
-         {/* Floating Add Button (Mobile) */}
-         <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full shadow-lg shadow-accent-500/30 flex items-center justify-center text-white z-40"
-         >
-            <Plus size={24} strokeWidth={2.5} />
-         </button>
-      </div>
+            <MobileNav />
+
+            {isAddModalOpen && (
+               <AddAssetModal
+                  inputTicker={inputTicker}
+                  inputQty={inputQty}
+                  inputCost={inputCost}
+                  suggestions={suggestions}
+                  onSearchChange={handleSearchChange}
+                  onSelectSuggestion={selectSuggestion}
+                  onQtyChange={(e) => setInputQty(e.target.value)}
+                  onCostChange={(e) => setInputCost(e.target.value)}
+                  onAdd={handleAddAsset}
+                  onClose={() => setIsAddModalOpen(false)}
+                  isPortfolio={activeTab === TabType.PORTFOLIO}
+               />
+            )}
+
+            {isSettingsOpen && (
+               <SettingsModal onClose={() => setIsSettingsOpen(false)} />
+            )}
+
+            {/* Floating Add Button (Mobile) */}
+            <button
+               onClick={() => setIsAddModalOpen(true)}
+               className="md:hidden fixed bottom-24 right-6 w-12 h-12 bg-[var(--accent-default)] rounded-full shadow-lg flex items-center justify-center text-black z-40 transition-transform hover:scale-110 active:scale-95"
+            >
+               <Plus size={24} strokeWidth={2} />
+            </button>
+         </div>
+      </ErrorBoundary>
    );
 };
 

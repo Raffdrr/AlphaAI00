@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import {
-    LayoutDashboard,
+    PieChart,
     List,
-    Calendar as CalendarIcon,
+    Calendar,
     Users,
     BarChart3,
     Settings,
     Plus,
     User,
-    PieChart
+    Menu
 } from 'lucide-react';
 import { TabType } from '../../types';
 
@@ -19,92 +19,112 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onAddAsset, onOpenSettings }) => {
-    const { activeTab, setActiveTab, userProfile, portfolios, activePortfolioId } = useStore();
-    const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
+    const { activeTab, setActiveTab, userProfile } = useStore();
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const navItems = [
         { id: TabType.PORTFOLIO, label: 'Portfolio', icon: PieChart },
         { id: TabType.WATCHLIST, label: 'Watchlist', icon: List },
-        { id: TabType.CALENDAR, label: 'Events', icon: CalendarIcon },
+        { id: TabType.CALENDAR, label: 'Events', icon: Calendar },
         { id: TabType.SOCIAL, label: 'Community', icon: Users },
         { id: TabType.ANALYTICS, label: 'Analytics', icon: BarChart3 },
     ];
 
     return (
-        <aside className="w-72 bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] flex-col h-screen hidden md:flex z-50">
-            {/* Brand */}
-            <div className="p-8 pb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-                        <span className="text-white font-bold text-xl font-display">A</span>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-white tracking-tight font-display">
-                            Alpha<span className="text-[var(--primary)]">Vision</span>
-                        </h1>
-                        <p className="text-xs text-[var(--text-muted)] font-mono">PRO TERMINAL</p>
-                    </div>
+        <aside
+            className={`
+                hidden md:flex flex-col h-[96vh] my-[2vh] ml-4 rounded-2xl 
+                fluent-acrylic transition-all duration-300 ease-out z-50
+                ${isExpanded ? 'w-64' : 'w-20'}
+            `}
+            onMouseEnter={() => setIsExpanded(true)}
+            onMouseLeave={() => setIsExpanded(false)}
+        >
+            {/* Header / Brand */}
+            <div className="p-6 flex items-center justify-center h-20">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent-default)] to-[var(--accent-dark)] flex items-center justify-center shadow-lg shrink-0">
+                    <span className="text-black font-bold text-xl">A</span>
                 </div>
+                {isExpanded && (
+                    <div className="ml-3 overflow-hidden whitespace-nowrap animate-fluent">
+                        <h1 className="font-bold text-lg tracking-tight">AlphaVision</h1>
+                    </div>
+                )}
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
-                <div className="text-xs font-bold text-[var(--text-muted)] px-4 mb-2 uppercase tracking-wider">Menu</div>
+            {/* Navigation Rail */}
+            <nav className="flex-1 px-3 space-y-2 py-4 flex flex-col items-center w-full">
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id;
                     return (
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden
+                            className={`
+                                relative flex items-center h-12 rounded-lg transition-all duration-200 group w-full
                                 ${isActive
-                                    ? 'text-white bg-[rgba(255,255,255,0.05)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
-                                    : 'text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.03)]'
-                                }`}
+                                    ? 'bg-[rgba(255,255,255,0.08)] text-[var(--accent-light)]'
+                                    : 'text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-white'
+                                }
+                                ${isExpanded ? 'px-4' : 'justify-center px-0'}
+                            `}
                         >
                             {isActive && (
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--primary)] rounded-r-full shadow-[0_0_10px_var(--primary)]" />
+                                <div className="absolute left-0 top-3 bottom-3 w-1 bg-[var(--accent-default)] rounded-r-full" />
                             )}
+
                             <item.icon
-                                size={20}
-                                className={`transition-colors ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-dim)] group-hover:text-white'}`}
+                                size={24}
+                                strokeWidth={isActive ? 2.5 : 2}
+                                className="shrink-0"
                             />
-                            <span>{item.label}</span>
+
+                            {isExpanded && (
+                                <span className="ml-4 text-sm font-medium whitespace-nowrap animate-fluent">
+                                    {item.label}
+                                </span>
+                            )}
+
+                            {/* Tooltip for collapsed state */}
+                            {!isExpanded && (
+                                <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#2d2d2d] border border-[var(--border-card)] rounded-md text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl">
+                                    {item.label}
+                                </div>
+                            )}
                         </button>
                     );
                 })}
             </nav>
 
-            {/* Portfolio Summary */}
-            {activePortfolio && (
-                <div className="p-4 mx-4 mb-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)]">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-[var(--text-muted)]">Total Balance</span>
-                        <span className="text-xs text-[var(--success)] font-mono">+2.4%</span>
-                    </div>
-                    <div className="text-xl font-bold font-mono text-white">$124,592.00</div>
-                </div>
-            )}
-
-            {/* User & Settings */}
-            <div className="p-4 border-t border-[var(--border-subtle)] bg-[rgba(0,0,0,0.2)]">
+            {/* Bottom Actions */}
+            <div className="p-4 flex flex-col gap-4 items-center w-full border-t border-[var(--border-card)] bg-[rgba(0,0,0,0.2)] rounded-b-2xl">
                 <button
                     onClick={onAddAsset}
-                    className="w-full mb-4 flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-semibold py-3 rounded-xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.5)] hover:-translate-y-0.5"
+                    className={`
+                        flex items-center justify-center rounded-xl bg-[var(--accent-default)] text-black font-semibold transition-all hover:brightness-110
+                        ${isExpanded ? 'w-full py-3 gap-2' : 'w-12 h-12'}
+                    `}
                 >
-                    <Plus size={18} strokeWidth={2.5} />
-                    <span>Quick Add</span>
+                    <Plus size={24} />
+                    {isExpanded && <span>Add Asset</span>}
                 </button>
 
-                <div className="flex items-center gap-3 px-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={onOpenSettings}>
-                    <div className="w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border-light)] flex items-center justify-center">
-                        <User size={14} className="text-[var(--text-muted)]" />
+                <div
+                    onClick={onOpenSettings}
+                    className={`
+                        flex items-center rounded-lg cursor-pointer hover:bg-[rgba(255,255,255,0.05)] transition-colors w-full
+                        ${isExpanded ? 'p-2 gap-3' : 'justify-center p-2'}
+                    `}
+                >
+                    <div className="w-8 h-8 rounded-full bg-[var(--bg-solid)] border border-[var(--border-card)] flex items-center justify-center shrink-0">
+                        <User size={16} className="text-[var(--text-secondary)]" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{userProfile?.displayName || 'User'}</p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">Free Plan</p>
-                    </div>
-                    <Settings size={16} className="text-[var(--text-muted)]" />
+                    {isExpanded && (
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className="text-sm font-medium truncate">{userProfile?.displayName || 'User'}</p>
+                            <p className="text-xs text-[var(--text-tertiary)] truncate">Settings</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </aside>
