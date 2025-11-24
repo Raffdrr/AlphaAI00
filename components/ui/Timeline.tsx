@@ -1,14 +1,13 @@
 import React from 'react';
-import { GlassCard } from './GlassCard';
+import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 
 export interface TimelineEvent {
     id: string;
     date: Date;
     title: string;
     subtitle: string;
+    type: 'dividend' | 'earnings' | 'other';
     amount?: string;
-    type: 'dividend' | 'earnings' | 'split';
-    logoUrl?: string;
 }
 
 interface TimelineProps {
@@ -16,55 +15,61 @@ interface TimelineProps {
     title?: string;
 }
 
-export const Timeline: React.FC<TimelineProps> = ({ events, title = "Upcoming Events" }) => {
+export const Timeline: React.FC<TimelineProps> = ({ events, title = "Upcoming" }) => {
     return (
         <div className="flex flex-col h-full">
-            <h3 className="text-lg font-semibold mb-4 px-1">{title}</h3>
-            <div className="relative space-y-6 pl-4">
-                {/* Vertical Line */}
-                <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-[var(--border-light)]" />
+            <h3 className="text-lg font-semibold mb-6 px-1 text-white flex items-center gap-2">
+                <Calendar size={20} className="text-[var(--accent-primary)]" />
+                {title}
+            </h3>
 
-                {events.map((event, index) => (
-                    <div key={event.id} className="relative flex items-start gap-4 group">
-                        {/* Dot */}
-                        <div className={`
-              z-10 w-3 h-3 rounded-full mt-1.5 border-2 border-[var(--bg-app)]
-              ${event.type === 'dividend' ? 'bg-[var(--success)]' : 'bg-[var(--primary)]'}
-              group-hover:scale-125 transition-transform
-            `} />
+            <div className="relative space-y-0 pl-2">
+                {/* Continuous Vertical Line */}
+                <div className="absolute left-[19px] top-2 bottom-6 w-[2px] bg-[var(--border-subtle)]" />
 
-                        {/* Content */}
-                        <div className="flex-1">
-                            <GlassCard className="p-4 hover:bg-[var(--bg-glass-hover)] transition-colors" noPadding>
+                {events.map((event, index) => {
+                    const isDividend = event.type === 'dividend';
+                    const isLast = index === events.length - 1;
+
+                    return (
+                        <div key={event.id} className="relative flex items-start gap-6 pb-8 group">
+                            {/* Dot Indicator */}
+                            <div className={`
+                                z-10 w-4 h-4 rounded-full mt-1.5 border-2 border-[var(--bg-app)] shadow-lg
+                                ${isDividend
+                                    ? 'bg-[var(--success)] shadow-[0_0_10px_var(--success-glow)]'
+                                    : 'bg-[var(--accent-primary)] shadow-[0_0_10px_var(--accent-glow)]'
+                                }
+                                transition-transform group-hover:scale-125
+                            `} />
+
+                            {/* Content */}
+                            <div className="flex-1 -mt-1">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex gap-3">
-                                        {event.logoUrl ? (
-                                            <img src={event.logoUrl} alt="" className="w-10 h-10 rounded-full bg-white/10" />
-                                        ) : (
-                                            <div className="w-10 h-10 rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-xs font-bold border border-[var(--border-light)]">
-                                                {event.title.substring(0, 2)}
-                                            </div>
-                                        )}
-                                        <div>
-                                            <h4 className="font-semibold text-sm">{event.title}</h4>
-                                            <p className="text-xs text-[var(--text-muted)]">{event.subtitle}</p>
-                                        </div>
+                                    <div>
+                                        <h4 className="font-bold text-white text-base group-hover:text-[var(--accent-primary)] transition-colors">
+                                            {event.title}
+                                        </h4>
+                                        <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+                                            {event.subtitle}
+                                        </p>
                                     </div>
+
                                     <div className="text-right">
-                                        <div className="text-xs font-mono text-[var(--text-muted)]">
-                                            {event.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        <div className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">
+                                            {event.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </div>
                                         {event.amount && (
-                                            <div className={`text-sm font-mono font-medium ${event.type === 'dividend' ? 'text-[var(--success)]' : 'text-[var(--text-main)]'}`}>
+                                            <div className="text-sm font-mono font-medium text-[var(--success)]">
                                                 {event.amount}
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                            </GlassCard>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
